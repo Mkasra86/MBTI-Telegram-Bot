@@ -1,7 +1,9 @@
+# Importing needed libraries
 import logging
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, Bot
 from telegram.ext import Application, CallbackQueryHandler, CommandHandler, ContextTypes, MessageHandler, filters
 
+# Importing all data from others files
 from QA import *
 from Q94 import * 
 from A94 import *
@@ -27,15 +29,16 @@ fResult = 0
 jResult = 0
 pResult = 0
 
-# ***
+# Varible for all users data
 
 userData = {}
 userStartLog = {}
 
 # ***
 
-# Every function I needed 
+# -------------Every function I needed-------------
 
+# Gives the question automatically based on the test log and language
 def QlistTypeChoosing(indent, userTesttype , userLang):
     if userLang == "EN":
         if userTesttype == "20":
@@ -48,7 +51,8 @@ def QlistTypeChoosing(indent, userTesttype , userLang):
             return list_qp_20[indent]
         elif userTesttype == "94":
             return list_qp_94[indent]
-        
+                
+# Gives the first option of question automatically based on the test log and language
 def AAlistTypeChoosing(indent, userTesttype , userLang):
     if userLang == "EN":
         if userTesttype == "20":
@@ -61,7 +65,8 @@ def AAlistTypeChoosing(indent, userTesttype , userLang):
             return list_ap_20a[indent]
         elif userTesttype == "94":
             return list_ap_94a[indent]
-
+        
+# Gives the second option of question automatically based on the test log and language
 def ABlistTypeChoosing(indent, userTesttype , userLang):
     if userLang == "EN":
         if userTesttype == "20":
@@ -74,13 +79,15 @@ def ABlistTypeChoosing(indent, userTesttype , userLang):
             return list_ap_20b[indent]
         elif userTesttype == "94":
             return list_ap_94b[indent]
-        
+                
+# Returns a quit text based on user's language   
 def returnText(userLang):
     if userLang == "EN":
         return "Quit 🔙"
     elif userLang == "FA":
         return "انصراف 🔙"
-        
+            
+# Sets the callback data when hitting the quit/return button based on user's language
 def returnCallback(userTesttype, userLang):
     if userLang == "EN":
         if userTesttype == "20":
@@ -94,13 +101,16 @@ def returnCallback(userTesttype, userLang):
         elif userTesttype == "94":
             return "94qp"
 
+# Writes (Returns) the text above the questions in the tests and calculate the
+# percentage of completed questions
 def testText(userLang):
     testPercentage = str(round((userData[userId][0]["questionNum"] / int(userData[userId][0]["testType"]) * 100) , 1)) + "%"
     if userLang == "EN":
         return f"MBTI {userData[userId][0]["testType"]} questions test \nQuestions number : {str(userData[userId][0]["questionNum"])} ({testPercentage} Done)\n\n"
     elif userLang == "FA":
         return f"تست {userData[userId][0]["testType"]} سواله MBTI \nسوال شماره : {str(userData[userId][0]["questionNum"])} ({testPercentage} انجام شده)\n\n"
-        
+
+# Saves the first options of question based on the test log and test type (20 or 90)    
 def AResultSaving(questionNumber, userTesttype, userLang):
     
     global eResult
@@ -139,7 +149,8 @@ def AResultSaving(questionNumber, userTesttype, userLang):
             elif 77 < questionNumber:
                 userData[userId][0]["jResult"] += 1
             return "a1_callback"   
-    
+
+# Saves the second options of question based on the test log and test type (20 or 90)
 def BResultSaving(questionNumber, userTesttype, userLang):
         
     global iResult
@@ -179,6 +190,7 @@ def BResultSaving(questionNumber, userTesttype, userLang):
                 userData[userId][0]["pResult"] += 1
             return "a2_callback"
         
+# The first question saving is different so these functions save in another way
 def firstSavingA(questionNumber):
     if questionNumber == 1:
                 AResultSaving(userData[userId][0]["questionNum"], userData[userId][0]["testType"], userData[userId][0]["enORfa"])
@@ -187,6 +199,7 @@ def firstSavingB(questionNumber):
     if questionNumber == 1:
                 BResultSaving(userData[userId][0]["questionNum"], userData[userId][0]["testType"], userData[userId][0]["enORfa"])
                 
+# Returns a report text based on user's language    
 def reportMenuText(userLang):
     if userLang == "EN":
         text = "Send report 🛑"
@@ -197,6 +210,7 @@ def reportMenuText(userLang):
             
         return text
     
+# Returns a return text based on user's language   
 def returnMainMenuText(userLang):
     
     if userLang == "EN":
@@ -208,6 +222,7 @@ def returnMainMenuText(userLang):
             
         return text
     
+# Returns the the user's test type and report description based on the user's language 
 def reportText(userTesttype, userLang):
     if userLang == "EN":
         reportText = """
@@ -228,7 +243,7 @@ We also appreciate to see your suggestions to get better.😇
         """
         return [reportText, userTesttype]
     
-# Gettin result
+# Gettin (calculating) the result of user's test
 
 def result(eResult, iResult, sResult, nResult, tResult, fResult, jResult, pResult):
     testResult = ""
@@ -254,6 +269,8 @@ def result(eResult, iResult, sResult, nResult, tResult, fResult, jResult, pResul
         
     return testResult  
 
+# Returns the description about the user's MBTI type in both English
+# and Persian (again based on user's language)
 def resultAnalysis(testResult, userLang):
     if userLang == "EN":
         if testResult == "ESTJ":
@@ -327,7 +344,7 @@ def resultAnalysis(testResult, userLang):
             
         return testAnalysis
         
-# Base program 0_0
+# Base of the program starts here 0_0
     
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
@@ -337,10 +354,11 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
-UserName = ""
+UserName = "" # Defining a global UserName variable so that I can use it in the whole app
 
+# Answers the "/start" command sent by the user at any time
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Sends a message with three inline buttons attached."""
+    
     global userId
     global UserName
     global user
@@ -354,6 +372,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             ] 
     
     try:
+         # Tries to clear the previous keyboards if there
+         # was one (a little bit tricky to understand this /=)
         await update.callback_query.edit_message_reply_markup(None)
     except:
         
@@ -366,21 +386,22 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         
         reply_markup = InlineKeyboardMarkup(keyboard)
         user = update.message.from_user
+        
+        # Gets the user's name from Telegram ( from updated message )
         UserName = user['first_name']
+        
+        # Gets the user's chat_id from Telegram ( from updated message )
         userId = user['id']
         await update.message.reply_text(f"Welcome {UserName}👋🏻 \nPlease choose:", reply_markup=reply_markup)
 
-# Menus and other stuffs 0_0 
+# Menus and other stuffs
 
+# Every callback will be answered in here
 async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     
+    # Making everything needed global so that I can set and use it 
+    # again in every part of the app
     global query
-    
-    query = update.callback_query
-    user = update.callback_query.from_user
-
-    # global testsLog
-    # global questionNum
     global eResult
     global iResult
     global sResult
@@ -393,14 +414,20 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     global testType
     global userId
     global userData
+        
+    query = update.callback_query
+    user = update.callback_query.from_user
+
     
     userId = user['id']
     
+    # When you want to choose your language again it comes here
     await query.answer()
     if query.data == "lan_selection":
         
         userData[userId] = [
                 {
+                    # Reseting and defining user's data
                     "enORfa" : ""
                     ,"testsLog" : None
                     ,"eResult" : None
@@ -435,10 +462,13 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(f"Ok {UserName}!😊 \nPlease choose:", reply_markup=reply_markup)
         
+    # Showing the Persian menu and letting user to choose its test type (20 or 94 questions)
     elif query.data == "FA":
         
         userData[userId] = [
                 {
+                    # Reseting and defining user's data (except user 
+                    # language because it was choosen in here )
                     "enORfa" : "FA"
                     ,"testsLog" : None
                     ,"eResult" : None
@@ -480,10 +510,13 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         reply_markup_fa = InlineKeyboardMarkup(keyboardfa)
         await query.edit_message_text(f"تستی که میخوای رو انتخاب کن 😇 \n", reply_markup=reply_markup_fa)
         
+    # Showing the English menu and letting user to choose its test type (20 or 94 questions)
     elif query.data == "EN":
         
         userData[userId] = [
                 {
+                    # Reseting and defining user's data (except user 
+                    # because it they were already choosen )
                     "enORfa" : "EN"
                     ,"testsLog" : None
                     ,"eResult" : None
@@ -525,10 +558,13 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         reply_markup_en = InlineKeyboardMarkup(keyboarden)
         await query.edit_message_text(f"Choose which test you want 😇 \n", reply_markup=reply_markup_en)
     
+    # User comes here if choosed 20 Perisan MBTI test
     elif query.data == "20qp":
         
         userData[userId] = [
                 {
+                    # Reseting and defining user's data (except user language 
+                    # and test type because it they were already choosen )
                     "enORfa" : "FA"
                     ,"testsLog" : None
                     ,"eResult" : None
@@ -562,11 +598,13 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         
         reply_markup_fa20qp = InlineKeyboardMarkup(keyboard20qp)
         await query.edit_message_text(f"شروع کنیم؟! \n", reply_markup=reply_markup_fa20qp)
-        
+    # User comes here if choosed 20 English MBTI test
     elif query.data == "20q":
         
         userData[userId] = [
                 {
+                    # Reseting and defining user's data (except user language 
+                    # and test type because it they were already choosen )
                     "enORfa" : "EN"
                     ,"testsLog" : None
                     ,"eResult" : None
@@ -601,10 +639,13 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         reply_markup_fa20qp = InlineKeyboardMarkup(keyboard20qp)
         await query.edit_message_text(f"Should we start?! \n", reply_markup=reply_markup_fa20qp)
     
+    # User comes here if choosed 94 Perisan MBTI test
     elif query.data == "94qp":
         
         userData[userId] = [
                 {
+                    # Reseting and defining user's data (except user language 
+                    # and test type because it they were already choosen )
                     "enORfa" : "FA"
                     ,"testsLog" : None
                     ,"eResult" : None
@@ -638,11 +679,14 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         
         reply_markup_fa20qp = InlineKeyboardMarkup(keyboard20qp)
         await query.edit_message_text(f"شروع کنیم؟! \n", reply_markup=reply_markup_fa20qp)
-        
+    
+    # User comes here if choosed 94 English MBTI test
     elif query.data == "94q":
         
         userData[userId] = [
                 {
+                    # Reseting and defining user's data (except user language 
+                    # and test type because it they were already choosen )
                     "enORfa" : "EN"
                     ,"testsLog" : None
                     ,"eResult" : None
@@ -680,7 +724,10 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         
 # !! Program Brain (Asking questions) !!
 
+    # Test start menu in both languages
     elif query.data == "test_start":
+        
+        # Reseting and defining data
         userStartLog[userId][0]["userStart"] = 0
         userData[userId][0]["testsLog"] = 0
         userData[userId][0]["eResult"] = 0
@@ -710,14 +757,15 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         reply_markup_fa20qp = InlineKeyboardMarkup(keyboard20qp)
         await query.edit_message_text(text= testText(userData[userId][0]["enORfa"]) + QlistTypeChoosing(userData[userId][0]["testsLog"], userData[userId][0]["testType"], userData[userId][0]["enORfa"]), reply_markup=reply_markup_fa20qp)
         
-        userData[userId][0]["testsLog"] += 1
+        userData[userId][0]["testsLog"] += 1 # Adding 1 so the question number is recognizable and for the next question
         
     elif query.data == "a1_callback":
         
+        # Saving answer of FIRST choice
         userStartLog[userId][0]["userStart"] = 0
         
         firstSavingA(userData[userId][0]["questionNum"])
-        userData[userId][0]["questionNum"] = userData[userId][0]["testsLog"] + 1
+        userData[userId][0]["questionNum"] = userData[userId][0]["testsLog"] + 1 # Adding 1 so the question number is recognizable
         try:
             keyboardTest = [ 
                 [
@@ -740,7 +788,7 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             # Saving answers of FIRST choice
             AResultSaving(userData[userId][0]["questionNum"], userData[userId][0]["testType"], userData[userId][0]["enORfa"])
             
-                
+        # If there was no other questions, it comes here for showing the test result         
         except:
             keyboardTestEnd = [
                 [
@@ -757,14 +805,15 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             reply_markup_test_done = InlineKeyboardMarkup(keyboardTestEnd)
             await query.edit_message_text(text= resultAnalysis(result(userData[userId][0]["eResult"], userData[userId][0]["iResult"], userData[userId][0]["sResult"], userData[userId][0]["nResult"], userData[userId][0]["tResult"], userData[userId][0]["fResult"], userData[userId][0]["jResult"], userData[userId][0]["pResult"]), userData[userId][0]["enORfa"]), reply_markup=reply_markup_test_done)
             
-        userData[userId][0]["testsLog"] += 1
+        userData[userId][0]["testsLog"] += 1 # Adding 1 so the question number is recognizable and for the next question
         
     elif query.data == "a2_callback":
 
         userStartLog[userId][0]["userStart"] = 0
         
+        # Saving answer of SECOND choice
         firstSavingB(userData[userId][0]["questionNum"])
-        userData[userId][0]["questionNum"] = userData[userId][0]["testsLog"] + 1
+        userData[userId][0]["questionNum"] = userData[userId][0]["testsLog"] + 1 # Adding 1 so the question number is recognizable
         try:
             keyboardTest = [ 
                 [
@@ -784,10 +833,10 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             reply_markup_test = InlineKeyboardMarkup(keyboardTest)
             await query.edit_message_text(text= testText(userData[userId][0]["enORfa"]) + QlistTypeChoosing(userData[userId][0]["testsLog"], userData[userId][0]["testType"], userData[userId][0]["enORfa"]), reply_markup=reply_markup_test)
             
-            # Saving answers of FIRST choice
+            # Saving answers of second choice
             BResultSaving(userData[userId][0]["questionNum"], userData[userId][0]["testType"], userData[userId][0]["enORfa"])
             
-                
+        # If there was no other questions, it comes here for showing the test result         
         except:
             keyboardTestEnd = [
                 [
@@ -804,13 +853,13 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             reply_markup_test_done = InlineKeyboardMarkup(keyboardTestEnd)
             await query.edit_message_text(text= resultAnalysis(result(userData[userId][0]["eResult"], userData[userId][0]["iResult"], userData[userId][0]["sResult"], userData[userId][0]["nResult"], userData[userId][0]["tResult"], userData[userId][0]["fResult"], userData[userId][0]["jResult"], userData[userId][0]["pResult"]), userData[userId][0]["enORfa"]), reply_markup=reply_markup_test_done)
     
-        userData[userId][0]["testsLog"] += 1
+        userData[userId][0]["testsLog"] += 1 # Adding 1 so the question number is recognizable and for the next question
      
     elif query.data == "a3_callback":
         
         userStartLog[userId][0]["userStart"] = 0
         
-        userData[userId][0]["questionNum"] = userData[userId][0]["testsLog"] + 1
+        userData[userId][0]["questionNum"] = userData[userId][0]["testsLog"] + 1 # Adding 1 so the question number is recognizable
         try:
             keyboardTest = [ 
                 [
@@ -830,9 +879,10 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             reply_markup_test = InlineKeyboardMarkup(keyboardTest)
             await query.edit_message_text(text= testText(userData[userId][0]["enORfa"]) + QlistTypeChoosing(userData[userId][0]["testsLog"], userData[userId][0]["testType"], userData[userId][0]["enORfa"]), reply_markup=reply_markup_test)
             
-            # Saving answers of FIRST choice
+            # Saving answers of second choice
             BResultSaving(userData[userId][0]["questionNum"], userData[userId][0]["testType"], userData[userId][0]["enORfa"])
-                    
+                   
+        # If there was no other questions, it comes here for showing the test result  
         except:
             keyboardTestEnd = [
                 [
@@ -849,13 +899,13 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             reply_markup_test_done = InlineKeyboardMarkup(keyboardTestEnd)
             await query.edit_message_text(text= resultAnalysis(result(userData[userId][0]["eResult"], userData[userId][0]["iResult"], userData[userId][0]["sResult"], userData[userId][0]["nResult"], userData[userId][0]["tResult"], userData[userId][0]["fResult"], userData[userId][0]["jResult"], userData[userId][0]["pResult"]), userData[userId][0]["enORfa"]), reply_markup=reply_markup_test_done)
  
-        userData[userId][0]["testsLog"] += 1
+        userData[userId][0]["testsLog"] += 1 # Adding 1 so the question number is recognizable and for the next question
         
     elif query.data == "a4_callback":
         
         userStartLog[userId][0]["userStart"] = 0
         
-        userData[userId][0]["questionNum"] = userData[userId][0]["testsLog"] + 1
+        userData[userId][0]["questionNum"] = userData[userId][0]["testsLog"] + 1 # Adding 1 so the question number is recognizable
         try:
             keyboardTest = [ 
                 [
@@ -877,7 +927,8 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                 
             # Saving answers of FIRST choice
             AResultSaving(userData[userId][0]["questionNum"], userData[userId][0]["testType"], userData[userId][0]["enORfa"])
-                    
+        
+        # If there was no other questions, it comes here for showing the test result         
         except:
             keyboardTestEnd = [
                 [
@@ -894,8 +945,9 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             reply_markup_test_done = InlineKeyboardMarkup(keyboardTestEnd)
             await query.edit_message_text(text= resultAnalysis(result(userData[userId][0]["eResult"], userData[userId][0]["iResult"], userData[userId][0]["sResult"], userData[userId][0]["nResult"], userData[userId][0]["tResult"], userData[userId][0]["fResult"], userData[userId][0]["jResult"], userData[userId][0]["pResult"]), userData[userId][0]["enORfa"]), reply_markup=reply_markup_test_done)
  
-        userData[userId][0]["testsLog"] += 1
+        userData[userId][0]["testsLog"] += 1 # Adding 1 so the question number is recognizable and for the next question
         
+    # Send report works from here
     elif query.data == "sendReport":
         
         userStartLog[userId][0]["userStart"] = 0
@@ -919,9 +971,11 @@ async def report(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None: # 
     global userData
     
     
-    
+    # This is used fro sending report
     if query.data == "sendReport":
         
+        # If the user uses a command when send report was choosen, it 
+        # comes here to cancel the sending report
         if userStartLog[userId][0]["userStart"] == 1:
             
             keyboardReport = [
@@ -939,6 +993,7 @@ async def report(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None: # 
             elif userData[userId][0]["enORfa"] == "FA":
                 await bot.send_message(chat_id=userId, text="متوجه نشدم چی گفتی 👀", reply_markup=keyboard)
             
+        # If everything was okay and no command was choosen it sends the message to the chat_id written down
         else:
             await bot.send_message(chat_id=5445616530, text= f"""
                                 
@@ -990,6 +1045,8 @@ The report :
             userId = user['id']
 
             reply_markup_fa = InlineKeyboardMarkup(keyboardfa)
+            
+            # After the message was sent to the chat_id, it shows a text and goes back to the main menu
             if userData[userId][0]["enORfa"] == "EN":
                 await bot.send_message(chat_id=userId, text= "Your report has been sent to bot admin. 🤖")
                 await bot.send_message(chat_id=userId, text= None, reply_markup=reply_markup_en )
@@ -998,7 +1055,8 @@ The report :
             
             
             userStartLog[userId][0]["userStart"] = 1 
-            
+          
+    # This is used for unrecognized messages  
     else:
         keyboardReport = [
             [
@@ -1010,6 +1068,9 @@ The report :
         userId = user['id']
         
         keyboard = InlineKeyboardMarkup(keyboardReport)
+        
+        # This shows the message for unrecognized messages and gives 
+        # a button for going to the main menu
         if userData[userId][0]["enORfa"] == "EN":
             await bot.send_message(chat_id=userId, text="I didn't understand what you said 👀", reply_markup=keyboard)
         elif userData[userId][0]["enORfa"] == "FA":
@@ -1017,7 +1078,7 @@ The report :
         
 # --------------------------------
 
-
+# Help command 
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     
     global userData
@@ -1049,7 +1110,8 @@ Answer each question honestly to get the most accurate result.
 After completing the quiz, you'll receive a result with your personality type.😊
                                     
 """, reply_markup=reply_markup_command)
-    
+   
+# Credit command    
 async def credit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     
     global userData
@@ -1072,6 +1134,7 @@ This MBTI quiz bot was created and programmed by Matin Kasra. It uses a carefull
 
 """, reply_markup=reply_markup_command)
     
+# About command
 async def about(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     
     global userData
@@ -1113,6 +1176,7 @@ similar sites.😊
     
 # -------------------------------
 
+# Leting the app know to read evrything from where 0_0 
 def main() -> None:
 
     application = Application.builder().token(token).build()
