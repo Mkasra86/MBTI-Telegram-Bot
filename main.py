@@ -1,5 +1,6 @@
 # Importing needed libraries
 import logging
+import os
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, Bot
 from telegram.ext import Application, CallbackQueryHandler, CommandHandler, ContextTypes, MessageHandler, filters
 
@@ -9,6 +10,7 @@ from Q94 import *
 from A94 import *
 from TestAnalysis import *
 from API import token
+from radarChart import radarChart
 
 # Gettin the bot for some uses /=
 
@@ -244,7 +246,6 @@ We also appreciate to see your suggestions to get better.😇
         return [reportText, userTesttype]
     
 # Gettin (calculating) the result of user's test
-
 def result(eResult, iResult, sResult, nResult, tResult, fResult, jResult, pResult):
     testResult = ""
     if eResult > iResult:
@@ -343,7 +344,43 @@ def resultAnalysis(testResult, userLang):
             testAnalysis = INFP_p
             
         return testAnalysis
+
+# Sets the percentage of each MBTI letter
+def resultPercentages(userId, eResult, iResult, sResult, nResult, tResult, fResult, jResult, pResult):
+    
+    userData[userId][0]["eResultPersent"] = eResult / (eResult + iResult) * 100
+    userData[userId][0]["iResultPersent"] = iResult / (eResult + iResult) * 100
+    userData[userId][0]["sResultPersent"] = sResult / (sResult + nResult) * 100
+    userData[userId][0]["nResultPersent"] = nResult / (sResult + nResult) * 100
+    userData[userId][0]["tResultPersent"] = tResult / (tResult + fResult) * 100
+    userData[userId][0]["fResultPersent"] = fResult / (tResult + fResult) * 100
+    userData[userId][0]["jResultPersent"] = jResult / (jResult + pResult) * 100
+    userData[userId][0]["pResultPersent"] = pResult / (jResult + pResult) * 100
+
+# Returns the text showing after the test result based on user's language  
+def testDoneText(userLang):
+    if userLang == "EN":
+        text = """
+Your test was successfully finished and the
+test result will not be deleted and will
+be it the chat for you to see it at anytime.🦾
+For returning to the main menu
+click on ( /mainMenu ). 😁
+        """
         
+        return text
+    elif userLang == "FA":
+        text = """
+تست شما با موفقیت به اتمام رسید!
+جواب تست در صفحه چت فقط برای شما باقی 
+می ماند تا در هر زمان که خواستید به
+اون مراجعه کنید.🦾
+برای بازگشت به منوی اصلی را ( /mainMenu ) 
+لمس کنید. 😁
+        """
+        
+        return text
+
 # Base of the program starts here 0_0
     
 logging.basicConfig(
@@ -374,7 +411,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
          # Tries to clear the previous keyboards if there
          # was one (a little bit tricky to understand this /=)
-        await update.callback_query.edit_message_reply_markup(None)
+        await update.message.edit_reply_markup(reply_markup=None)
     except:
         
         keyboard =[
@@ -394,6 +431,123 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         userId = user['id']
         await update.message.reply_text(f"Welcome {UserName}👋🏻 \nPlease choose:", reply_markup=reply_markup)
 
+# Answers the "/mainMenu" command sent by the user at any 
+# time it shows the main menu to the user
+async def mainMenu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    
+    global userData
+    global userId
+    
+    if userData[userId][0]["enORfa"] == "EN":
+        userData[userId] = [
+                {
+                    # Reseting and defining user's data (except user 
+                    # because it they were already choosen )
+                    "enORfa" : "EN"
+                    ,"testsLog" : None
+                    ,"eResult" : None
+                    ,"iResult" : None
+                    ,"sResult" : None
+                    ,"nResult" : None
+                    ,"tResult" : None
+                    ,"fResult" : None
+                    ,"jResult" : None
+                    ,"pResult" : None
+                    ,"eResultPersent" : None
+                    ,"iResultPersent" : None
+                    ,"sResultPersent" : None
+                    ,"nResultPersent" : None
+                    ,"tResultPersent" : None
+                    ,"fResultPersent" : None
+                    ,"jResultPersent" : None
+                    ,"pResultPersent" : None
+                    ,"testType" : ""
+                    ,"questionNum" : None
+                }
+            ]    
+        
+        userStartLog[userId] = [
+                {
+                    "userStart" : 0
+                }
+            ] 
+        
+        keyboarden = [ 
+            [
+                InlineKeyboardButton("Short MBTI test (20 Questions)", callback_data="20q")   
+            ],
+            [
+                InlineKeyboardButton("Suggested full MBTI test (94 Questions)", callback_data="94q")
+            ],
+            [
+                InlineKeyboardButton(text=reportMenuText(userData[userId][0]["enORfa"]), callback_data="sendReport")
+            ],
+            [
+                InlineKeyboardButton("Return 🔙", callback_data="lan_selection")
+            ]
+        ]
+        
+        user = update.message.from_user
+        userId = user['id']
+        
+        reply_markup_en = InlineKeyboardMarkup(keyboarden)
+        await update.message.reply_text(f"Choose which test you want 😇 \n", reply_markup=reply_markup_en)
+    
+    elif userData[userId][0]["enORfa"] == "FA":
+        userData[userId] = [
+                {
+                    # Reseting and defining user's data (except user 
+                    # language because it was choosen in here )
+                    "enORfa" : "FA"
+                    ,"testsLog" : None
+                    ,"eResult" : None
+                    ,"iResult" : None
+                    ,"sResult" : None
+                    ,"nResult" : None
+                    ,"tResult" : None
+                    ,"fResult" : None
+                    ,"jResult" : None
+                    ,"pResult" : None
+                    ,"eResultPersent" : None
+                    ,"iResultPersent" : None
+                    ,"sResultPersent" : None
+                    ,"nResultPersent" : None
+                    ,"tResultPersent" : None
+                    ,"fResultPersent" : None
+                    ,"jResultPersent" : None
+                    ,"pResultPersent" : None
+                    ,"testType" : ""
+                    ,"questionNum" : None
+                }
+            ]    
+        userStartLog[userId] = [
+                {
+                    "userStart" : 0
+                }
+            ] 
+        
+        keyboardfa = [ 
+            [
+                InlineKeyboardButton("تست سریع MBTI (20 سوال)", callback_data="20qp")   
+            ],
+            [
+                InlineKeyboardButton("تست کامل پیشنهادی MBTI (94 سوال)", callback_data="94qp")
+            ],
+            [
+                InlineKeyboardButton(text=reportMenuText(userData[userId][0]["enORfa"]), callback_data="sendReport")
+            ],
+            [
+                InlineKeyboardButton("بازگشت🔙", callback_data="lan_selection")
+            ]
+        ]
+        
+        user = update.message.from_user
+        userId = user['id']
+        
+        reply_markup_fa = InlineKeyboardMarkup(keyboardfa)
+        await update.message.reply_text(f"تستی که میخوای رو انتخاب کن 😇 \n", reply_markup=reply_markup_fa)
+        
+    
 # Menus and other stuffs
 
 # Every callback will be answered in here
@@ -438,6 +592,14 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                     ,"fResult" : None
                     ,"jResult" : None
                     ,"pResult" : None
+                    ,"eResultPersent" : None
+                    ,"iResultPersent" : None
+                    ,"sResultPersent" : None
+                    ,"nResultPersent" : None
+                    ,"tResultPersent" : None
+                    ,"fResultPersent" : None
+                    ,"jResultPersent" : None
+                    ,"pResultPersent" : None
                     ,"testType" : ""
                     ,"questionNum" : None
                 }
@@ -479,6 +641,14 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                     ,"fResult" : None
                     ,"jResult" : None
                     ,"pResult" : None
+                    ,"eResultPersent" : None
+                    ,"iResultPersent" : None
+                    ,"sResultPersent" : None
+                    ,"nResultPersent" : None
+                    ,"tResultPersent" : None
+                    ,"fResultPersent" : None
+                    ,"jResultPersent" : None
+                    ,"pResultPersent" : None
                     ,"testType" : ""
                     ,"questionNum" : None
                 }
@@ -488,7 +658,7 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                     "userStart" : 0
                 }
             ] 
-        enORfa = userData[userId][0]["enORfa"]
+        
         keyboardfa = [ 
             [
                 InlineKeyboardButton("تست سریع MBTI (20 سوال)", callback_data="20qp")   
@@ -527,6 +697,14 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                     ,"fResult" : None
                     ,"jResult" : None
                     ,"pResult" : None
+                    ,"eResultPersent" : None
+                    ,"iResultPersent" : None
+                    ,"sResultPersent" : None
+                    ,"nResultPersent" : None
+                    ,"tResultPersent" : None
+                    ,"fResultPersent" : None
+                    ,"jResultPersent" : None
+                    ,"pResultPersent" : None
                     ,"testType" : ""
                     ,"questionNum" : None
                 }
@@ -536,7 +714,7 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                     "userStart" : 0
                 }
             ] 
-        enORfa = userData[userId][0]["enORfa"]
+        
         keyboarden = [ 
             [
                 InlineKeyboardButton("Short MBTI test (20 Questions)", callback_data="20q")   
@@ -575,6 +753,14 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                     ,"fResult" : None
                     ,"jResult" : None
                     ,"pResult" : None
+                    ,"eResultPersent" : None
+                    ,"iResultPersent" : None
+                    ,"sResultPersent" : None
+                    ,"nResultPersent" : None
+                    ,"tResultPersent" : None
+                    ,"fResultPersent" : None
+                    ,"jResultPersent" : None
+                    ,"pResultPersent" : None
                     ,"testType" : "20"
                     ,"questionNum" : None
                 }
@@ -615,6 +801,14 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                     ,"fResult" : None
                     ,"jResult" : None
                     ,"pResult" : None
+                    ,"eResultPersent" : None
+                    ,"iResultPersent" : None
+                    ,"sResultPersent" : None
+                    ,"nResultPersent" : None
+                    ,"tResultPersent" : None
+                    ,"fResultPersent" : None
+                    ,"jResultPersent" : None
+                    ,"pResultPersent" : None
                     ,"testType" : "20"
                     ,"questionNum" : None
                 }
@@ -656,6 +850,14 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                     ,"fResult" : None
                     ,"jResult" : None
                     ,"pResult" : None
+                    ,"eResultPersent" : None
+                    ,"iResultPersent" : None
+                    ,"sResultPersent" : None
+                    ,"nResultPersent" : None
+                    ,"tResultPersent" : None
+                    ,"fResultPersent" : None
+                    ,"jResultPersent" : None
+                    ,"pResultPersent" : None
                     ,"testType" : "94"
                     ,"questionNum" : None
                 }
@@ -697,6 +899,14 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                     ,"fResult" : None
                     ,"jResult" : None
                     ,"pResult" : None
+                    ,"eResultPersent" : None
+                    ,"iResultPersent" : None
+                    ,"sResultPersent" : None
+                    ,"nResultPersent" : None
+                    ,"tResultPersent" : None
+                    ,"fResultPersent" : None
+                    ,"jResultPersent" : None
+                    ,"pResultPersent" : None
                     ,"testType" : "94"
                     ,"questionNum" : None
                 }
@@ -738,6 +948,14 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         userData[userId][0]["fResult"] = 0
         userData[userId][0]["jResult"] = 0
         userData[userId][0]["pResult"] = 0
+        userData[userId][0]["eResultPersent"] = 0
+        userData[userId][0]["iResultPersent"] = 0
+        userData[userId][0]["sResultPersent"] = 0
+        userData[userId][0]["nResultPersent"] = 0
+        userData[userId][0]["tResultPersent"] = 0
+        userData[userId][0]["fResultPersent"] = 0
+        userData[userId][0]["jResultPersent"] = 0
+        userData[userId][0]["pResultPersent"] = 0
         userData[userId][0]["questionNum"] = userData[userId][0]["testsLog"] + 1
         keyboard20qp = [ 
             [
@@ -790,20 +1008,48 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             
         # If there was no other questions, it comes here for showing the test result         
         except:
-            keyboardTestEnd = [
-                [
-                    InlineKeyboardButton(text=returnMainMenuText(userData[userId][0]["enORfa"]), callback_data=userData[userId][0]["enORfa"])
-                ],
-                [
-                    InlineKeyboardButton(text=reportMenuText(userData[userId][0]["enORfa"]), callback_data="sendReport")
-                ]
-            ]
+            
+            await query.edit_message_reply_markup(reply_markup=None)
             
             user = update.callback_query.from_user
             userId = user['id']
             
-            reply_markup_test_done = InlineKeyboardMarkup(keyboardTestEnd)
-            await query.edit_message_text(text= resultAnalysis(result(userData[userId][0]["eResult"], userData[userId][0]["iResult"], userData[userId][0]["sResult"], userData[userId][0]["nResult"], userData[userId][0]["tResult"], userData[userId][0]["fResult"], userData[userId][0]["jResult"], userData[userId][0]["pResult"]), userData[userId][0]["enORfa"]), reply_markup=reply_markup_test_done)
+            testResult = result(userData[userId][0]["eResult"], userData[userId][0]["iResult"], userData[userId][0]["sResult"], userData[userId][0]["nResult"], userData[userId][0]["tResult"], userData[userId][0]["fResult"], userData[userId][0]["jResult"], userData[userId][0]["pResult"])
+            description = resultAnalysis(testResult, userData[userId][0]["enORfa"])
+            
+            # Getting the percentages
+            resultPercentages(userId
+                              ,userData[userId][0]["eResult"]
+                              ,userData[userId][0]["iResult"]
+                              ,userData[userId][0]["sResult"]
+                              ,userData[userId][0]["nResult"]
+                              ,userData[userId][0]["tResult"]
+                              ,userData[userId][0]["fResult"]
+                              ,userData[userId][0]["jResult"]
+                              ,userData[userId][0]["pResult"]
+                              )
+            
+            # Making the chart
+            radarChart(userId
+                       ,testResult
+                       ,userData[userId][0]["eResultPersent"]
+                       ,userData[userId][0]["iResultPersent"]
+                       ,userData[userId][0]["sResultPersent"]
+                       ,userData[userId][0]["nResultPersent"]
+                       ,userData[userId][0]["tResultPersent"]
+                       ,userData[userId][0]["fResultPersent"]
+                       ,userData[userId][0]["jResultPersent"]
+                       ,userData[userId][0]["pResultPersent"]
+                       )
+            
+            # Giving the result and the chart to the user
+            await context.bot.send_photo(chat_id=userId, photo="./"+ str(userId) + ".png", caption=description, reply_markup=None) 
+            
+            os.remove("./"+ str(userId) + ".png") # Removing the chart picture from the system
+            
+            await bot.send_message(chat_id=userId, text=testDoneText(userData[userId][0]["enORfa"]) , reply_markup=None)
+            
+            
             
         userData[userId][0]["testsLog"] += 1 # Adding 1 so the question number is recognizable and for the next question
         
@@ -838,23 +1084,50 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             
         # If there was no other questions, it comes here for showing the test result         
         except:
-            keyboardTestEnd = [
-                [
-                    InlineKeyboardButton(text=returnMainMenuText(userData[userId][0]["enORfa"]), callback_data=userData[userId][0]["enORfa"])
-                ],
-                [
-                    InlineKeyboardButton(text=reportMenuText(userData[userId][0]["enORfa"]), callback_data="sendReport")
-                ]
-            ]
+            
+            await query.edit_message_reply_markup(reply_markup=None)
             
             user = update.callback_query.from_user
             userId = user['id']
             
-            reply_markup_test_done = InlineKeyboardMarkup(keyboardTestEnd)
-            await query.edit_message_text(text= resultAnalysis(result(userData[userId][0]["eResult"], userData[userId][0]["iResult"], userData[userId][0]["sResult"], userData[userId][0]["nResult"], userData[userId][0]["tResult"], userData[userId][0]["fResult"], userData[userId][0]["jResult"], userData[userId][0]["pResult"]), userData[userId][0]["enORfa"]), reply_markup=reply_markup_test_done)
-    
+            testResult = result(userData[userId][0]["eResult"], userData[userId][0]["iResult"], userData[userId][0]["sResult"], userData[userId][0]["nResult"], userData[userId][0]["tResult"], userData[userId][0]["fResult"], userData[userId][0]["jResult"], userData[userId][0]["pResult"])
+            description = resultAnalysis(testResult, userData[userId][0]["enORfa"])
+            
+            # Getting the percentages
+            resultPercentages(userId
+                              ,userData[userId][0]["eResult"]
+                              ,userData[userId][0]["iResult"]
+                              ,userData[userId][0]["sResult"]
+                              ,userData[userId][0]["nResult"]
+                              ,userData[userId][0]["tResult"]
+                              ,userData[userId][0]["fResult"]
+                              ,userData[userId][0]["jResult"]
+                              ,userData[userId][0]["pResult"]
+                              )
+            
+            # Making the chart
+            radarChart(userId
+                       ,testResult
+                       ,userData[userId][0]["eResultPersent"]
+                       ,userData[userId][0]["iResultPersent"]
+                       ,userData[userId][0]["sResultPersent"]
+                       ,userData[userId][0]["nResultPersent"]
+                       ,userData[userId][0]["tResultPersent"]
+                       ,userData[userId][0]["fResultPersent"]
+                       ,userData[userId][0]["jResultPersent"]
+                       ,userData[userId][0]["pResultPersent"]
+                       )
+            
+            # Giving the result and the chart to the user
+            await context.bot.send_photo(chat_id=userId, photo="./"+ str(userId) + ".png", caption=description, reply_markup=None) 
+            
+            os.remove("./"+ str(userId) + ".png") # Removing the chart picture from the system
+            
+            await bot.send_message(chat_id=userId, text=testDoneText(userData[userId][0]["enORfa"]) , reply_markup=None)
+            
+            
+            
         userData[userId][0]["testsLog"] += 1 # Adding 1 so the question number is recognizable and for the next question
-     
     elif query.data == "a3_callback":
         
         userStartLog[userId][0]["userStart"] = 0
@@ -884,21 +1157,49 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                    
         # If there was no other questions, it comes here for showing the test result  
         except:
-            keyboardTestEnd = [
-                [
-                    InlineKeyboardButton(text=returnMainMenuText(userData[userId][0]["enORfa"]), callback_data=userData[userId][0]["enORfa"])
-                ],
-                [
-                    InlineKeyboardButton(text=reportMenuText(userData[userId][0]["enORfa"]), callback_data="sendReport")
-                ]
-            ]
+            
+            await query.edit_message_reply_markup(reply_markup=None)
             
             user = update.callback_query.from_user
             userId = user['id']
             
-            reply_markup_test_done = InlineKeyboardMarkup(keyboardTestEnd)
-            await query.edit_message_text(text= resultAnalysis(result(userData[userId][0]["eResult"], userData[userId][0]["iResult"], userData[userId][0]["sResult"], userData[userId][0]["nResult"], userData[userId][0]["tResult"], userData[userId][0]["fResult"], userData[userId][0]["jResult"], userData[userId][0]["pResult"]), userData[userId][0]["enORfa"]), reply_markup=reply_markup_test_done)
- 
+            testResult = result(userData[userId][0]["eResult"], userData[userId][0]["iResult"], userData[userId][0]["sResult"], userData[userId][0]["nResult"], userData[userId][0]["tResult"], userData[userId][0]["fResult"], userData[userId][0]["jResult"], userData[userId][0]["pResult"])
+            description = resultAnalysis(testResult, userData[userId][0]["enORfa"])
+            
+            # Getting the percentages
+            resultPercentages(userId
+                              ,userData[userId][0]["eResult"]
+                              ,userData[userId][0]["iResult"]
+                              ,userData[userId][0]["sResult"]
+                              ,userData[userId][0]["nResult"]
+                              ,userData[userId][0]["tResult"]
+                              ,userData[userId][0]["fResult"]
+                              ,userData[userId][0]["jResult"]
+                              ,userData[userId][0]["pResult"]
+                              )
+            
+            # Making the chart
+            radarChart(userId
+                       ,testResult
+                       ,userData[userId][0]["eResultPersent"]
+                       ,userData[userId][0]["iResultPersent"]
+                       ,userData[userId][0]["sResultPersent"]
+                       ,userData[userId][0]["nResultPersent"]
+                       ,userData[userId][0]["tResultPersent"]
+                       ,userData[userId][0]["fResultPersent"]
+                       ,userData[userId][0]["jResultPersent"]
+                       ,userData[userId][0]["pResultPersent"]
+                       )
+            
+            # Giving the result and the chart to the user
+            await context.bot.send_photo(chat_id=userId, photo="./"+ str(userId) + ".png", caption=description, reply_markup=None) 
+            
+            os.remove("./"+ str(userId) + ".png") # Removing the chart picture from the system
+            
+            await bot.send_message(chat_id=userId, text=testDoneText(userData[userId][0]["enORfa"]) , reply_markup=None)
+            
+            
+            
         userData[userId][0]["testsLog"] += 1 # Adding 1 so the question number is recognizable and for the next question
         
     elif query.data == "a4_callback":
@@ -930,21 +1231,50 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         
         # If there was no other questions, it comes here for showing the test result         
         except:
-            keyboardTestEnd = [
-                [
-                    InlineKeyboardButton(text=returnMainMenuText(userData[userId][0]["enORfa"]), callback_data=userData[userId][0]["enORfa"])
-                ],
-                [
-                    InlineKeyboardButton(text=reportMenuText(userData[userId][0]["enORfa"]), callback_data="sendReport")
-                ]
-            ]
+            
+            await query.edit_message_reply_markup(reply_markup=None)
             
             user = update.callback_query.from_user
             userId = user['id']
             
-            reply_markup_test_done = InlineKeyboardMarkup(keyboardTestEnd)
-            await query.edit_message_text(text= resultAnalysis(result(userData[userId][0]["eResult"], userData[userId][0]["iResult"], userData[userId][0]["sResult"], userData[userId][0]["nResult"], userData[userId][0]["tResult"], userData[userId][0]["fResult"], userData[userId][0]["jResult"], userData[userId][0]["pResult"]), userData[userId][0]["enORfa"]), reply_markup=reply_markup_test_done)
- 
+            testResult = result(userData[userId][0]["eResult"], userData[userId][0]["iResult"], userData[userId][0]["sResult"], userData[userId][0]["nResult"], userData[userId][0]["tResult"], userData[userId][0]["fResult"], userData[userId][0]["jResult"], userData[userId][0]["pResult"])
+            description = resultAnalysis(testResult, userData[userId][0]["enORfa"])
+            
+            # Getting the percentages
+            resultPercentages(userId
+                              ,userData[userId][0]["eResult"]
+                              ,userData[userId][0]["iResult"]
+                              ,userData[userId][0]["sResult"]
+                              ,userData[userId][0]["nResult"]
+                              ,userData[userId][0]["tResult"]
+                              ,userData[userId][0]["fResult"]
+                              ,userData[userId][0]["jResult"]
+                              ,userData[userId][0]["pResult"]
+                              )
+            
+            # Making the chart
+            radarChart(userId
+                       ,testResult
+                       ,userData[userId][0]["eResultPersent"]
+                       ,userData[userId][0]["iResultPersent"]
+                       ,userData[userId][0]["sResultPersent"]
+                       ,userData[userId][0]["nResultPersent"]
+                       ,userData[userId][0]["tResultPersent"]
+                       ,userData[userId][0]["fResultPersent"]
+                       ,userData[userId][0]["jResultPersent"]
+                       ,userData[userId][0]["pResultPersent"]
+                       )
+            
+            
+            # Giving the result and the chart to the user
+            await context.bot.send_photo(chat_id=userId, photo="./"+ str(userId) + ".png", caption=description, reply_markup=None) 
+            
+            os.remove("./"+ str(userId) + ".png") # Removing the chart picture from the system
+            
+            await bot.send_message(chat_id=userId, text=testDoneText(userData[userId][0]["enORfa"]) , reply_markup=None)
+            
+            
+            
         userData[userId][0]["testsLog"] += 1 # Adding 1 so the question number is recognizable and for the next question
         
     # Send report works from here
@@ -1182,6 +1512,7 @@ def main() -> None:
     application = Application.builder().token(token).build()
 
     application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("mainMenu", mainMenu))
     application.add_handler(CommandHandler("about", about))
     application.add_handler(CommandHandler("credit", credit))
     application.add_handler(CommandHandler("help", help))
