@@ -8,6 +8,7 @@ This **MBTI Quiz Bot** is a Telegram bot designed to help users discover their M
 ## Features:
 - 📝 **Interactive Quiz**: A set of well-crafted questions to determine the user's MBTI type.
 - 🧠 **Personality Insights**: Provides detailed results and descriptions of each MBTI personality type.
+- 📊 **Precise Result**: Showing radar chart for the tests result to analize your test better.
 - 🦾 **Multiple Quizes**: Provides two set of tests, 20 and 94 question test.
 - 🔄 **Customizable Experience**: Easy-to-use commands like `/start`, `/about`, `/credit`, and `/help`.
 - 🌍 **Multi-language Support**: Questions and results available in both English and Persian (optional).
